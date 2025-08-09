@@ -1,6 +1,6 @@
 import "./globals.css";
 
-import { ClerkProvider } from "@clerk/nextjs";
+// import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
@@ -14,8 +14,12 @@ export const metadata: Metadata = {
   },
   description:
     "AI Wallpaper Shop is an AI Wallpaper Generator, used to generate beautiful wallpapers with AI.",
-  keywords:
-    "AI Wallpaper, AI Wallpaper Shop, AI Wallpaper Generator, AI Wallpaper image",
+  keywords: [
+    "AI Wallpaper",
+    "AI Wallpaper Shop", 
+    "AI Wallpaper Generator",
+    "AI Wallpaper image",
+  ],
 };
 
 export default function RootLayout({
@@ -24,13 +28,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    // <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
           <Toaster position="top-center" richColors />
-
           {children}
-
           <script
             async
             src="https://chatgpt-umami.vercel.app/script.js"
@@ -38,6 +40,6 @@ export default function RootLayout({
           ></script>
         </body>
       </html>
-    </ClerkProvider>
+    // </ClerkProvider>
   );
 }
