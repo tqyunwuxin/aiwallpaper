@@ -1,29 +1,24 @@
 import { NextResponse } from "next/server";
-// import { authMiddleware } from "@clerk/nextjs";
+import { authMiddleware } from "@clerk/nextjs";
 
-// 临时禁用Clerk中间件
-export default function middleware(req: any) {
-  return NextResponse.next();
-}
+export default authMiddleware({
+  publicRoutes: ["/", "/pricing", "/api/get-wallpapers", "/api/get-user-info"],
 
-// export default authMiddleware({
-//   publicRoutes: ["/", "/pricing", "/api/get-wallpapers", "/api/get-user-info"],
+  afterAuth(auth, req, evt) {
+    if (!auth.userId && !auth.isPublicRoute) {
+      if (auth.isApiRoute) {
+        return NextResponse.json(
+          { code: -2, message: "no auth" },
+          { status: 401 }
+        );
+      } else {
+        return NextResponse.redirect(new URL("/sign-in", req.url));
+      }
+    }
 
-//   afterAuth(auth, req, evt) {
-//     if (!auth.userId && !auth.isPublicRoute) {
-//       if (auth.isApiRoute) {
-//         return NextResponse.json(
-//           { code: -2, message: "no auth" },
-//           { status: 401 }
-//         );
-//       } else {
-//         return NextResponse.redirect(new URL("/sign-in", req.url));
-//       }
-//     }
-
-//     return NextResponse.next();
-//   },
-// });
+    return NextResponse.next();
+  },
+});
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api)(.*)"],
