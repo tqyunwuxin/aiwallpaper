@@ -3,12 +3,18 @@ import { Readable } from "stream";
 import axios from "axios";
 import fs from "fs";
 
+// 配置Cloudflare R2（S3兼容）
 AWS.config.update({
-  accessKeyId: process.env.AWS_AK,
-  secretAccessKey: process.env.AWS_SK,
+  accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID,
+  secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY,
 });
 
-const s3 = new AWS.S3();
+// 创建S3客户端，指向Cloudflare R2
+const s3 = new AWS.S3({
+  endpoint: process.env.CLOUDFLARE_ENDPOINT,
+  region: 'auto',  // Cloudflare R2使用'auto'
+  s3ForcePathStyle: true,  // 重要：强制使用路径样式
+});
 
 export async function downloadAndUploadImage(
   imageUrl: string,
@@ -28,7 +34,20 @@ export async function downloadAndUploadImage(
       Body: response.data as Readable,
     };
 
-    return s3.upload(uploadParams).promise();
+    const result = await s3.upload(uploadParams).promise();
+    
+    // 直接构造正确的Public Development URL
+    // 确保s3Key不包含bucket名称
+    const cleanKey = s3Key.startsWith(`${bucketName}/`) ? s3Key.substring(`${bucketName}/`.length) : s3Key;
+    const publicUrl = `https://pub-b3b0705070114d239cfb5b06f7130d0c.r2.dev/${cleanKey}`;
+    
+    console.log(`Original Location: ${result.Location}`);
+    console.log(`Generated Public URL: ${publicUrl}`);
+    
+    return {
+      ...result,
+      Location: publicUrl
+    };
   } catch (e) {
     console.log("upload failed:", e);
     throw e;
