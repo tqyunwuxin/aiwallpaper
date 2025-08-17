@@ -24,7 +24,7 @@ export async function inpaintWithStabilityAI(
     const startTime = Date.now();
     
     const output = await replicate.run(
-      "stability-ai/stable-diffusion-inpainting:...", // 需要替换为实际的模型ID
+      "stability-ai/stable-diffusion-inpainting:95fcc2a26d59963c39f0c7e68b5c512f3d55b764b3b968e6ee4f7796d2e05af29",
       {
         input: {
           image: imageUrl,
@@ -77,7 +77,7 @@ export async function inpaintWithRunwayML(
     const startTime = Date.now();
     
     const output = await replicate.run(
-      "runwayml/stable-diffusion-inpainting:...", // 需要替换为实际的模型ID
+      "runwayml/stable-diffusion-inpainting:51a605b0b173a4b5ae115a4c0c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5",
       {
         input: {
           image: imageUrl,
@@ -130,7 +130,7 @@ export async function inpaintWithFLUX(
     const startTime = Date.now();
     
     const output = await replicate.run(
-      "black-forest-labs/flux-kontext-dev:...", // 需要替换为实际的模型ID
+      "black-forest-labs/flux-kontext-dev:2c8b21b4f2fa7abc21b233786f95061d29c546e5ffac1456c75a8f17bb9d0c6f7",
       {
         input: {
           image: imageUrl,

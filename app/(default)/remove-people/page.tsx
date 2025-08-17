@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AppContext } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ export default function RemovePeoplePage() {
 
       setSelectedFile(file);
       
-      // 创建预览
+      // 创建预览 - 使用Blob URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       setResultUrl(null);
@@ -74,23 +74,30 @@ export default function RemovePeoplePage() {
     try {
       setStatus({
         stage: 'uploading',
-        message: 'Uploading image...',
+        message: 'Preparing image for processing...',
         progress: 10
       });
 
-      // 创建FormData
-      const formData = new FormData();
-      formData.append('image', selectedFile);
-
+      // 将File转换为base64数据
+      const imageData = await convertFileToBase64(selectedFile);
+      
       setStatus({
         stage: 'detecting',
         message: 'Detecting people in image...',
         progress: 30
       });
 
+      // 发送base64数据到API，不再上传文件
       const response = await fetch('/api/protected/remove-background-persons', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image_data: imageData,
+          file_name: selectedFile.name,
+          file_size: selectedFile.size
+        }),
       });
 
       if (response.status === 401) {
@@ -135,6 +142,22 @@ export default function RemovePeoplePage() {
     }
   };
 
+  // 将File转换为base64
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
+      };
+      reader.onerror = () => reject(new Error('File reading failed'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleDownload = () => {
     if (resultUrl) {
       const link = document.createElement('a');
@@ -147,6 +170,14 @@ export default function RemovePeoplePage() {
   };
 
   const resetProcess = () => {
+    // 清理Blob URL
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    if (resultUrl) {
+      URL.revokeObjectURL(resultUrl);
+    }
+    
     setSelectedFile(null);
     setPreviewUrl(null);
     setResultUrl(null);
@@ -156,6 +187,18 @@ export default function RemovePeoplePage() {
       progress: 0
     });
   };
+
+  // 组件卸载时清理Blob URL
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      if (resultUrl) {
+        URL.revokeObjectURL(resultUrl);
+      }
+    };
+  }, [previewUrl, resultUrl]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

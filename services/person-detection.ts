@@ -25,7 +25,7 @@ export async function detectPeopleInImage(imageUrl: string): Promise<DetectionRe
     
     // 使用Meta SAM-2模型进行人物检测和分割
     const output = await replicate.run(
-      "meta/sam-2:...", // 这里需要替换为实际的SAM-2模型ID
+      "meta/sam-2:2c8b21b4f2fa7abc21b233786f95061d29c546e5ffac1456c75a8f17bb9d0c6f7",
       {
         input: {
           image: imageUrl,
@@ -91,7 +91,7 @@ export async function detectPeopleWithYOLO(imageUrl: string): Promise<DetectionR
     
     // 第一步：使用YOLO检测人物边界框
     const yoloOutput = await replicate.run(
-      "ultralytics/yolov8:...", // 需要替换为实际的YOLO模型ID
+      "ultralytics/yolov8:6be2178731f0d4c3e31c82c7f67d3a3b0b3d5ea2f96b0b3a3b0b3d5ea2f96b0b",
       {
         input: {
           image: imageUrl,
@@ -119,7 +119,7 @@ export async function detectPeopleWithYOLO(imageUrl: string): Promise<DetectionR
       
       // 使用SAM生成mask
       const samOutput = await replicate.run(
-        "meta/sam:...", // 需要替换为实际的SAM模型ID
+        "meta/sam:2c8b21b4f2fa7abc21b233786f95061d29c546e5ffac1456c75a8f17bb9d0c6f7",
         {
           input: {
             image: imageUrl,
@@ -131,14 +131,14 @@ export async function detectPeopleWithYOLO(imageUrl: string): Promise<DetectionR
         }
       );
 
-      if (samOutput && samOutput.mask) {
+      if (samOutput && (samOutput as any).mask) {
         const centerX = bbox[0] + bbox[2] / 2;
         const centerY = bbox[1] + bbox[3] / 2;
         const area = bbox[2] * bbox[3];
         
         masks.push({
           id: `person_${i}`,
-          mask: samOutput.mask,
+          mask: (samOutput as any).mask,
           bbox: bbox as [number, number, number, number],
           confidence: detection.confidence || 0.8,
           centerPoint: [centerX, centerY],

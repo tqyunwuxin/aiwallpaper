@@ -1,7 +1,6 @@
 import { respData, respErr } from "@/lib/resp";
 import { User } from "@/types/user";
 import { currentUser } from "@clerk/nextjs";
-import { downloadAndUploadImage } from "@/lib/s3";
 import { getUserCredits } from "@/services/order";
 import { saveUser } from "@/services/user";
 import { autoRemoveBackgroundPeopleWithRetry } from "@/services/auto-person-removal";
@@ -31,42 +30,28 @@ export async function POST(req: Request) {
     };
     await saveUser(userInfo);
 
-    // 解析FormData
-    const formData = await req.formData();
-    const imageFile = formData.get('image') as File;
+    // 解析JSON请求体，不再使用FormData
+    const { image_data, file_name, file_size } = await req.json();
     
-    if (!imageFile) {
-      return respErr("no image file provided");
+    if (!image_data) {
+      return respErr("no image data provided");
     }
 
-    // 验证文件类型
-    if (!imageFile.type.startsWith('image/')) {
-      return respErr("invalid file type, only images are allowed");
+    // 验证图像数据格式
+    if (!image_data.startsWith('data:image/')) {
+      return respErr("invalid image data format");
     }
 
     // 验证文件大小 (限制为10MB)
-    if (imageFile.size > 10 * 1024 * 1024) {
+    if (file_size && file_size > 10 * 1024 * 1024) {
       return respErr("file too large, maximum size is 10MB");
     }
 
-    console.log(`Processing image: ${imageFile.name}, size: ${imageFile.size} bytes`);
+    console.log(`Processing image: ${file_name || 'unknown'}, size: ${file_size || 'unknown'} bytes`);
 
-    // 上传图像到S3/Cloudflare R2
-    const timestamp = Date.now();
-    const fileName = `person-removal/${timestamp}_${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    
-    const s3Result = await downloadAndUploadImage(
-      imageFile, // 直接传递File对象
-      process.env.CLOUDFLARE_BUCKET || "aiwallpaper-r2",
-      fileName
-    );
-
-    if (!s3Result || !s3Result.Location) {
-      return respErr("failed to upload image");
-    }
-
-    const imageUrl = s3Result.Location;
-    console.log(`Image uploaded to: ${imageUrl}`);
+    // 直接使用base64图像数据，不需要上传到S3/R2
+    const imageUrl = image_data;
+    console.log(`Image data received, length: ${image_data.length} characters`);
 
     // 执行人物移除
     console.log("Starting automatic person removal...");
