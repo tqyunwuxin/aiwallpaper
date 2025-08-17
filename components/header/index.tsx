@@ -10,6 +10,7 @@ export default function () {
 
   const navigations: Tab[] = [
     { name: "pricing", title: "Pricing", url: "/pricing" },
+    { name: "remove-people", title: "Remove People", url: "/remove-people" },
   ];
 
   return (
